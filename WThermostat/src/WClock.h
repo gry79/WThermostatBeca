@@ -138,8 +138,9 @@ public:
 				  && (!timeZoneServer->equalsString(""))) {
 				String request = timeZoneServer->c_str();
 				network->debug(F("Time zone update via '%s'"), request.c_str());
+				WiFiClient client;
 				HTTPClient http;
-				http.begin(request);
+				http.begin(client, request);
 				int httpCode = http.GET();
 				if (httpCode > 0) {
 					WJsonParser parser;
