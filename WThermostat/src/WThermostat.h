@@ -116,6 +116,7 @@ public :
     //Heating Relay and State property
     this->state = nullptr;
     this->supportingHeatingRelay = network->getSettings()->setBoolean("supportingHeatingRelay", true);
+    this->heatingRelayInverted = network->getSettings()->setBoolean("heatingRelayInverted", false);
     if (this->supportingHeatingRelay->getBoolean()) {
       pinMode(PIN_STATE_HEATING_RELAY, INPUT);
     	this->state = new WProperty("state", "State", STRING, TYPE_HEATING_COOLING_PROPERTY);
@@ -157,6 +158,7 @@ public :
 		page->printf(HTTP_CHECKBOX_OPTION, "am", "am", (this->notifyAllMcuCommands->getBoolean() ? HTTP_CHECKED : ""), "", "Send all MCU commands via MQTT");
     //Checkbox with support for relay
 		page->printf(HTTP_CHECKBOX_OPTION, "rs", "rs", (this->supportingHeatingRelay->getBoolean() ? HTTP_CHECKED : ""), "", "Relay at GPIO 5 (not working without hw mod)");
+    page->printf(HTTP_CHECKBOX_OPTION, "ri", "ri", (this->heatingRelayInverted->getBoolean() ? HTTP_CHECKED : ""), "", "Relay status inverted");
 
     printConfigPageCustomParameters(request, page);
 
@@ -174,6 +176,7 @@ public :
 		this->completeDeviceState->setBoolean(request->arg("cr") != HTTP_TRUE);
 		this->notifyAllMcuCommands->setBoolean(request->arg("am") == HTTP_TRUE);
     this->supportingHeatingRelay->setBoolean(request->arg("rs") == HTTP_TRUE);
+    this->heatingRelayInverted->setBoolean(request->arg("ri") == HTTP_TRUE);
     submitConfigPageCustomParameters(request, page);
   }
 
@@ -305,6 +308,7 @@ public :
       bool heating = false;
       if ((this->supportingHeatingRelay->getBoolean()) && (state != nullptr)) {
         heating = digitalRead(PIN_STATE_HEATING_RELAY);
+        heating = this->heatingRelayInverted->getBoolean() ? !heating : heating;
       }
       this->state->setString(heating ? STATE_HEATING : STATE_OFF);
     }
@@ -352,6 +356,7 @@ protected :
   WProperty* locked;
   WProperty* state;
   WProperty* supportingHeatingRelay;
+  WProperty* heatingRelayInverted;
   byte schedules[54];
 
   void sendActualTimeToBeca() {
